@@ -62,6 +62,7 @@ class PDFSorterApp(QWidget):
         self.log.append(message)
 
     def sort_pdfs(self):
+        print("Start button clicked")
         if not self.source_folder or not self.destination_folder:
             self.log_message("Prosim prvo izberite dve mapi!")
             return 
@@ -78,6 +79,17 @@ class PDFSorterApp(QWidget):
                             text = page.extract_text()
 
                             if not text:
+                                continue
+
+                            match = re.search(
+                                # Looking for sizes = ["A0", "A1", "A2", "A3", "A4"]
+                                r"\bA[0-4]\b",
+                                text,
+                            )
+
+                            if match:
+                                print(match.group())
+                                sheet_size = match.group()
                                 break
                     
                     if sheet_size:
