@@ -28,36 +28,31 @@ for file in os.listdir(source_folder):
             with pdfplumber.open(file_path) as pdf:
                 sheet_size = None
 
-                
                 for page in pdf.pages:
                     text = page.extract_text()
                      
-
                     if not text:
                         continue
 
                     match = re.search(
-                        r"Sheet\s*size[\s:\n]*A\s*([0-4])",
+                        r"\bA[0-4]\b",
                         text,
-                        re.IGNORECASE
                     )
 
                     if match:
-                        sheet_size = f"A{match.group(1)}"
+                        print(match)
+                        sheet_size = f"A{match.group()}"
                         break
+ 
+            if sheet_size:
+                destination_folder = os.path.join(destination_root, sheet_size)
+                os.makedirs(destination_folder, exist_ok=True)
 
-                    
+                shutil.move(file_path, os.path.join(destination_folder, file))
 
-           
-                    if sheet_size:
-                        destination_folder = os.path.join(destination_root, sheet_size)
-                        os.makedirs(destination_folder, exist_ok=True)
-
-                        shutil.move(file_path, os.path.join(destination_folder, file))
-
-                        print(f"Moved {file} -> {sheet_size}")
-                    else:
-                        print(f"No size found in {file}")
+                print(f"Moved {file} -> {sheet_size}")
+            else:
+                print(f"No size found in {file}")
 
         except Exception as e:
             print(f"Error reading {file}: {e}")
