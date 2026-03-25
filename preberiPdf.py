@@ -13,8 +13,8 @@ class PDFSorterApp(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("PDF bralec")
-        self.setGeometry(200, 200, 500, 400)
+        self.setWindowTitle("Bralec PDF formata")
+        self.setGeometry(300, 300, 600, 500)
 
         self.source_folder = ""
         self.destination_folder = ""
@@ -25,11 +25,18 @@ class PDFSorterApp(QWidget):
         self.dest_label = QLabel("Ciljna mapa: ni izbrana")
 
         self.source_btn = QPushButton("Izberi izvorno mapo")
+        
         self.dest_btn = QPushButton("Izberi ciljno mapo")
         self.start_btn = QPushButton("Začni sortiranje")
 
         self.log = QTextEdit()
         self.log.setReadOnly(True)
+        self.log.setFixedHeight(120)
+        self.log.setStyleSheet("""
+            QTextEdit {
+            font-size: 12px;
+            }
+        """)
 
         layout.addWidget(self.source_label)
         layout.addWidget(self.source_btn)
@@ -39,6 +46,9 @@ class PDFSorterApp(QWidget):
 
         layout.addWidget(self.start_btn)
         layout.addWidget(self.log)
+
+        layout.addWidget(self.log, 1)
+
 
         self.setLayout(layout)
 
