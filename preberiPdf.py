@@ -1,5 +1,4 @@
 import pdfplumber
-from pathlib import Path
 import shutil
 import os
 import re
@@ -18,7 +17,7 @@ if not destination_root:
     print("No destination folder selected. Exiting...")
     exit()
 
-sizes = ["A0", "A1", "A2", "A3", "A4"]
+
 
 for file in os.listdir(source_folder):
     if file.lower().endswith(".pdf"):
@@ -35,13 +34,14 @@ for file in os.listdir(source_folder):
                         continue
 
                     match = re.search(
+                        # Looking for sizes = ["A0", "A1", "A2", "A3", "A4"]
                         r"\bA[0-4]\b",
                         text,
                     )
 
                     if match:
-                        print(match)
-                        sheet_size = f"A{match.group()}"
+                        print(match.group())
+                        sheet_size = match.group()
                         break
  
             if sheet_size:
