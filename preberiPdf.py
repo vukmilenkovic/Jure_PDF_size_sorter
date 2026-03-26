@@ -3,10 +3,72 @@ import shutil
 import os
 import re
 import sys
+import fitz
 
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QTextEdit
+    QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QTextEdit, QScrollArea,
+
 )
+
+
+from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtGui import ( QImage, QPixmap, QPainter, QPen )
+
+
+class PDFViewer(QLabel):
+    def __init__(self, pdf_path):
+        super().__init__()
+
+        self.doc = fitz.open(pdf_path)
+        self.page = self.doc[0]
+
+        pix = self.page.get_pixmap()
+
+        img = QImage.fromData(pix.tobytes("png"))
+
+        self.image = QPixmap.fromImage(img)
+       
+
+        self.setPixmap(self.image)
+
+        self.start = QPoint()
+        self.end = QPoint()
+        self.drawing = False
+
+    def mousePressEvent(self, event):
+        self.start = event.pos()
+        self.end = event.pos()
+        self.drawing = True
+        self.update()
+
+    def mouseMoveEvent(self, event):
+        if self.drawing:
+            self.end = event.pos()
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        self.end = event.pos()
+        self.drawing = False
+
+        x0 = min(self.start.x(), self.end.x())
+        y0 = min(self.start.y(), self.end.y())
+        x1 = max(self.start.x(), self.end.x())
+        y1 = max(self.start.y(), self.end.y())
+
+        print(f"SELECTED RECT: ({x0}, {y0}, {x1}, {y1})")
+
+        self.update()
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+
+        if self.drawing:
+            painter = QPainter(self)
+            pen = QPen(Qt.GlobalColor.red, 2)
+            painter.setPen(pen)
+            painter.drawRect(self.start.x(), self.start.y(),
+                             self.end.x() - self.start.x(),
+                             self.end.y() - self.start.y())
 
 
 class PDFSorterApp(QWidget):
@@ -28,6 +90,7 @@ class PDFSorterApp(QWidget):
         
         self.dest_btn = QPushButton("Izberi ciljno mapo")
         self.start_btn = QPushButton("Začni sortiranje")
+        self.inspect_btn = QPushButton("Izberi PDF za koordinate")
 
         self.log = QTextEdit()
         self.log.setReadOnly(True)
@@ -49,12 +112,15 @@ class PDFSorterApp(QWidget):
 
         layout.addWidget(self.log, 1)
 
+        layout.addWidget(self.inspect_btn)
+
 
         self.setLayout(layout)
 
         self.source_btn.clicked.connect(self.select_source)
         self.dest_btn.clicked.connect(self.select_destination)
         self.start_btn.clicked.connect(self.sort_pdfs)
+        self.inspect_btn.clicked.connect(self.open_pdf_viewer)
 
     def select_source(self):
         folder = QFileDialog.getExistingDirectory(self, "Izberi izvorno mapo")
@@ -113,6 +179,23 @@ class PDFSorterApp(QWidget):
 
                 except Exception as e:
                     self.log_message(f"Napaka pri branju... {file}: {e}")
+
+    def open_pdf_viewer(self):
+        file, _ = QFileDialog.getOpenFileName(self, "Izberi PDF", "", "PDF Files (*.pdf)")
+        if file:
+            self.viewer = PDFViewer(file)
+
+            self.scroll = QScrollArea()
+            self.scroll.setWidget(self.viewer)
+            self.scroll.setWidgetResizable(True)
+
+            self.scroll.setWindowTitle("Izberi območje (klik + povleci)")
+            self.scroll.showMaximized()
+
+    # Exits full window on escape
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self.close()
 
 
 if __name__ == "__main__":
