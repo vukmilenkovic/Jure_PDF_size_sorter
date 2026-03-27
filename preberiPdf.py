@@ -81,6 +81,14 @@ class PDFSorterApp(QWidget):
         self.source_folder = ""
         self.destination_folder = ""
 
+        self.overlays = {
+            "A4": [(55, 730, 173, 813)],
+            "A3": [(650, 730, 762, 813)],
+            "A2": [(1145, 1075, 1260, 1161)],
+            "A1": [(1845, 1575, 1961, 1655)],
+            "A0": [(2832, 2273, 2940, 2357)],
+        }
+
         layout = QVBoxLayout()
 
         self.source_label = QLabel("Izvorna mapa: ni izbrana")
@@ -138,17 +146,20 @@ class PDFSorterApp(QWidget):
         self.log.append(message)
 
     def sort_pdfs(self):
-        print("Start button clicked")
+        self.log_message("Začetek sortiranja ⌛⏳")
         if not self.source_folder or not self.destination_folder:
             self.log_message("Prosim prvo izberite dve mapi!")
             return 
 
         for file in os.listdir(self.source_folder):
+            QApplication.processEvents()
             if file.lower().endswith(".pdf"):
                 file_path = os.path.join(self.source_folder, file)
 
                 try:
                     with pdfplumber.open(file_path) as pdf:
+                        self.log_message(f"Odprl PDF: { file }")
+
                         sheet_size = None
 
                         for page in pdf.pages:
@@ -172,13 +183,19 @@ class PDFSorterApp(QWidget):
                         dest_folder = os.path.join(self.destination_folder, sheet_size)
                         os.makedirs(dest_folder, exist_ok=True)
 
-                        shutil.move(file_path, os.path.join(dest_folder, file))
-                        self.log_message(f"Premaknil {file} -> {sheet_size}")
+                        output_path = os.path.join(dest_folder, file)
+
+                        self.overlay_and_save_pdf(file_path, output_path, sheet_size)
+
+                        self.log_message(f"Obdelan {file} -> {sheet_size}")
                     else:
                         self.log_message(f"Velikost ni bila najdena v datoteki: {file}")
 
                 except Exception as e:
                     self.log_message(f"Napaka pri branju... {file}: {e}")
+
+        self.log_message("✅ Končano! Vse datoteke obdelane.")
+        print("DONE: All files processed")
 
     def open_pdf_viewer(self):
         file, _ = QFileDialog.getOpenFileName(self, "Izberi PDF", "", "PDF Files (*.pdf)")
@@ -196,6 +213,22 @@ class PDFSorterApp(QWidget):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Escape:
             self.close()
+
+    
+    def overlay_and_save_pdf(self, input_path, output_path, sheet_size):
+        import fitz
+
+        doc = fitz.open(input_path)
+
+        rectangles = self.overlays.get(sheet_size, [])
+
+        for page in doc:
+            for coords in rectangles:
+                rect = fitz.Rect(coords)
+                page.draw_rect(rect, color=(1, 1, 1), fill=(1, 1, 1))
+
+        doc.save(output_path)
+        doc.close()
 
 
 if __name__ == "__main__":
