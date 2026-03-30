@@ -84,6 +84,7 @@ class PDFSorterApp(QWidget):
         self.source_folder = ""
         self.destination_folder = ""
         self.combined_output_folder = "Izbrisane glave"
+        self.unsorted_output_folder = "neuvrščeni"
 
         self.overlays = {
             "A4": [(55, 730, 173, 813)],
@@ -146,52 +147,51 @@ class PDFSorterApp(QWidget):
         self.log.append(message)
 
     def sort_pdfs(self):
-        self.log_message("Zacetek sortiranja... ⏳⌛")
+        self.log_message("Zacetek sortiranja...⌛⏳")
         if not self.source_folder or not self.destination_folder:
             self.log_message("Prosim prvo izberite dve mapi!")
             return
 
         combined_folder = os.path.join(self.destination_folder, self.combined_output_folder)
+        unsorted_folder = os.path.join(self.destination_folder, self.unsorted_output_folder)
         os.makedirs(combined_folder, exist_ok=True)
-        
+        os.makedirs(unsorted_folder, exist_ok=True)
 
         for file in os.listdir(self.source_folder):
             QApplication.processEvents()
-            if file.lower().endswith(".pdf"):
-                file_path = os.path.join(self.source_folder, file)
+            if not file.lower().endswith(".pdf"):
+                continue
 
-                try:
-                    with pdfplumber.open(file_path) as pdf:
-                        self.log_message(f"Odprl PDF: {file}")
+            file_path = os.path.join(self.source_folder, file)
 
-                        sheet_size = None
+            try:
+                with pdfplumber.open(file_path) as pdf:
+                    self.log_message(f"Odprl PDF: {file}")
 
-                        for page in pdf.pages:
-                            text = page.extract_text()
+                    sheet_size = None
+                    for page in pdf.pages:
+                        text = page.extract_text()
+                        if not text:
+                            continue
 
-                            if not text:
-                                continue
+                        match = re.search(r"\bA[0-4]\b", text)
+                        if match:
+                            sheet_size = match.group()
+                            break
 
-                            match = re.search(
-                                # Looking for sizes = ["A0", "A1", "A2", "A3", "A4"]
-                                r"\bA[0-4]\b",
-                                text,
-                            )
+                if sheet_size:
+                    output_path = os.path.join(combined_folder, file)
+                    self.overlay_and_save_pdf(file_path, output_path, sheet_size)
+                    self.log_message(f"Obdelan {file} ({sheet_size}) -> {combined_folder}")
+                else:
+                    self.log_message(f"Velikost ni bila najdena v datoteki: {file}")
+                    unsorted_output_path = self.copy_to_unsorted(file_path, file, unsorted_folder)
+                    self.log_message(f"Kopirano v neuvrsceni: {unsorted_output_path}")
 
-                            if match:
-                                print(match.group())
-                                sheet_size = match.group()
-                                break
-
-                    if sheet_size:
-                        output_path = os.path.join(combined_folder, file)
-                        self.overlay_and_save_pdf(file_path, output_path, sheet_size)
-                        self.log_message(f"Obdelan {file} ({sheet_size}) -> {combined_folder}")
-                    else:
-                        self.log_message(f"Velikost ni bila najdena v datoteki: {file}")
-
-                except Exception as e:
-                    self.log_message(f"Napaka pri branju... {file}: {e}")
+            except Exception as e:
+                self.log_message(f"Napaka pri branju... {file}: {e}")
+                unsorted_output_path = self.copy_to_unsorted(file_path, file, unsorted_folder)
+                self.log_message(f"Kopirano v neuvrsceni: {unsorted_output_path}")
 
         self.log_message("Koncano! Vse datoteke obdelane. ✅")
         print("DONE: All files processed")
@@ -208,14 +208,12 @@ class PDFSorterApp(QWidget):
             self.scroll.setWindowTitle("Izberi obmocje (klik + povleci)")
             self.scroll.showMaximized()
 
-    # Exits full window on escape
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Escape:
             self.close()
 
     def overlay_and_save_pdf(self, input_path, output_path, sheet_size):
         doc = fitz.open(input_path)
-
         rectangles = self.overlays.get(sheet_size, [])
 
         for page in doc:
@@ -225,6 +223,22 @@ class PDFSorterApp(QWidget):
 
         doc.save(output_path)
         doc.close()
+
+    def copy_to_unsorted(self, file_path, filename, unsorted_folder):
+        unsorted_output_path = self.get_unique_output_path(unsorted_folder, filename)
+        shutil.copy2(file_path, unsorted_output_path)
+        return unsorted_output_path
+
+    def get_unique_output_path(self, target_folder, filename):
+        base, ext = os.path.splitext(filename)
+        candidate_path = os.path.join(target_folder, filename)
+        counter = 1
+
+        while os.path.exists(candidate_path):
+            candidate_path = os.path.join(target_folder, f"{base}_{counter}{ext}")
+            counter += 1
+
+        return candidate_path
 
 
 if __name__ == "__main__":
