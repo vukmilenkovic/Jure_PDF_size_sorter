@@ -99,7 +99,7 @@ class PDFSorterApp(QWidget):
 
         self.is_running = False
         self.cancel_requested = False
-        self.stats = {"processed": 0, "matched": 0, "unsorted": 0, "errors": 0}
+        self.stats = self.new_stats()
 
         self.overlays = {
             "A4": [(55, 730, 173, 813)],
@@ -254,9 +254,7 @@ class PDFSorterApp(QWidget):
     def select_destination(self):
         folder = QFileDialog.getExistingDirectory(self, "Izberi ciljno mapo")
         if folder:
-            self.destination_folder = folder
-            self.dest_label.setText(f"Ciljna mapa: {folder}")
-            self.update_button_states()
+            self.set_destination_folder(folder)
 
     def select_excel_file(self):
         file, _ = QFileDialog.getOpenFileName(
@@ -279,7 +277,7 @@ class PDFSorterApp(QWidget):
         self.progress_bar.setValue(0)
         self.progress_bar.setMaximum(max(1, total_files))
         self.progress_label.setText(f"Napredek: 0 / {total_files}")
-        self.stats = {"processed": 0, "matched": 0, "unsorted": 0, "errors": 0}
+        self.stats = self.new_stats()
         self.summary_label.setText("V teku...")
 
     def stop_sorting(self):
@@ -407,10 +405,9 @@ class PDFSorterApp(QWidget):
             f"Cilj: '{group_destination_folder}'"
         )
 
-        if not self.destination_folder:
-            self.destination_folder = group_destination_folder
-            self.dest_label.setText(f"Ciljna mapa: {group_destination_folder}")
-            self.update_button_states()
+        # Keep destination context aligned with the last grouping run so folder buttons open
+        # the correct output location.
+        self.set_destination_folder(group_destination_folder)
 
         files_to_process = []
         if pdf_source_folder:
@@ -516,12 +513,23 @@ class PDFSorterApp(QWidget):
         files = []
         try:
             for root, _, filenames in os.walk(folder_path):
-                for file in sorted(filenames):
+                filenames.sort()
+                for file in filenames:
                     if file.lower().endswith(extension):
                         files.append((os.path.join(root, file), file))
         except Exception as e:
             self.log_message(f"Mape ni mogoce prebrati '{folder_path}': {e}")
         return files
+
+    def new_stats(self):
+        return {"processed": 0, "matched": 0, "unsorted": 0, "errors": 0}
+
+    def set_destination_folder(self, folder_path):
+        if not folder_path:
+            return
+        self.destination_folder = folder_path
+        self.dest_label.setText(f"Ciljna mapa: {folder_path}")
+        self.update_button_states()
 
     def load_excel_mapping(self, excel_path):
         try:
