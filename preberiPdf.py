@@ -62,7 +62,7 @@ class PDFViewer(QLabel):
         x1 = max(self.start.x(), self.end.x())
         y1 = max(self.start.y(), self.end.y())
 
-        print(f"SELECTED RECT: ({x0}, {y0}, {x1}, {y1})")
+        print(f"IZBRAN PRAVOKOTNIK: ({x0}, {y0}, {x1}, {y1})")
         self.update()
 
     def paintEvent(self, event):
@@ -84,7 +84,7 @@ class PDFSorterApp(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("PDF Size Sorter")
+        self.setWindowTitle("Razvrscevalnik PDF velikosti")
         self.setGeometry(250, 180, 1080, 780)
 
         self.source_folder = ""
@@ -115,9 +115,9 @@ class PDFSorterApp(QWidget):
     def build_ui(self):
         layout = QVBoxLayout()
 
-        self.source_btn = QPushButton("Select source folder")
+        self.source_btn = QPushButton("Izberi izvorno mapo")
         self.source_btn.clicked.connect(self.select_source)
-        self.source_label = QLabel("Source folder: not selected")
+        self.source_label = QLabel("Izvorna mapa: ni izbrana")
         self.source_label.setWordWrap(True)
 
         source_row = QHBoxLayout()
@@ -137,7 +137,7 @@ class PDFSorterApp(QWidget):
 
         self.excel_btn = QPushButton("Izberi Excel (.xlsx) datoteko")
         self.excel_btn.clicked.connect(self.select_excel_file)
-        self.excel_label = QLabel("Excel file: not selected")
+        self.excel_label = QLabel("Excel datoteka: ni izbrana")
         self.excel_label.setWordWrap(True)
 
         excel_row = QHBoxLayout()
@@ -145,22 +145,22 @@ class PDFSorterApp(QWidget):
         excel_row.addWidget(self.excel_label, 1)
         layout.addLayout(excel_row)
 
-        self.start_btn = QPushButton("Začni sortitanje (PDF)")
+        self.start_btn = QPushButton("Zacni sortiranje (PDF)")
         self.start_btn.clicked.connect(self.sort_pdfs)
 
-        self.group_by_excel_btn = QPushButton("Group by Excel (PDF + STP)")
+        self.group_by_excel_btn = QPushButton("Razvrsti po Excelu (PDF + STP)")
         self.group_by_excel_btn.clicked.connect(self.group_files_by_excel)
 
-        self.stop_btn = QPushButton("Stop")
+        self.stop_btn = QPushButton("Ustavi")
         self.stop_btn.clicked.connect(self.stop_sorting)
 
-        self.open_sorted_btn = QPushButton("Open processed folder")
+        self.open_sorted_btn = QPushButton("Odpri mapo obdelanih")
         self.open_sorted_btn.clicked.connect(self.open_processed_folder)
 
-        self.open_unsorted_btn = QPushButton("Open unsorted folder")
+        self.open_unsorted_btn = QPushButton("Odpri mapo neuvrscenih")
         self.open_unsorted_btn.clicked.connect(self.open_unsorted_folder)
 
-        self.inspect_btn = QPushButton("Inspect PDF coordinates")
+        self.inspect_btn = QPushButton("Preglej koordinate PDF")
         self.inspect_btn.clicked.connect(self.open_pdf_viewer)
 
         action_row = QHBoxLayout()
@@ -172,7 +172,7 @@ class PDFSorterApp(QWidget):
         action_row.addWidget(self.inspect_btn)
         layout.addLayout(action_row)
 
-        self.progress_label = QLabel("Progress: 0 / 0")
+        self.progress_label = QLabel("Napredek: 0 / 0")
         self.progress_bar = QProgressBar()
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(1)
@@ -183,12 +183,12 @@ class PDFSorterApp(QWidget):
         progress_row.addWidget(self.progress_bar, 1)
         layout.addLayout(progress_row)
 
-        self.summary_label = QLabel("Ready.")
+        self.summary_label = QLabel("Pripravljeno.")
         layout.addWidget(self.summary_label)
 
         self.results_table = QTableWidget(0, 4)
         self.results_table.setHorizontalHeaderLabels(
-            ["File", "Detected/Match Value", "Status", "Output Path"]
+            ["Datoteka", "Najdena/Ujemajoca vrednost", "Status", "Izhodna pot"]
         )
         header = self.results_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
@@ -245,30 +245,30 @@ class PDFSorterApp(QWidget):
         return combined_folder, unsorted_folder
 
     def select_source(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select source folder")
+        folder = QFileDialog.getExistingDirectory(self, "Izberi izvorno mapo")
         if folder:
             self.source_folder = folder
-            self.source_label.setText(f"Source folder: {folder}")
+            self.source_label.setText(f"Izvorna mapa: {folder}")
             self.update_button_states()
 
     def select_destination(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select destination folder")
+        folder = QFileDialog.getExistingDirectory(self, "Izberi ciljno mapo")
         if folder:
             self.destination_folder = folder
-            self.dest_label.setText(f"Destination folder: {folder}")
+            self.dest_label.setText(f"Ciljna mapa: {folder}")
             self.update_button_states()
 
     def select_excel_file(self):
         file, _ = QFileDialog.getOpenFileName(
             self,
-            "Select Excel file",
+            "Izberi Excel datoteko",
             "",
-            "Excel Files (*.xlsx)",
+            "Excel datoteke (*.xlsx)",
         )
         if file:
             self.excel_file_path = file
-            self.excel_label.setText(f"Excel file: {file}")
-            self.log_message("Excel file selected.")
+            self.excel_label.setText(f"Excel datoteka: {file}")
+            self.log_message("Excel datoteka je izbrana.")
             self.update_button_states()
 
     def log_message(self, message):
@@ -278,36 +278,36 @@ class PDFSorterApp(QWidget):
         self.results_table.setRowCount(0)
         self.progress_bar.setValue(0)
         self.progress_bar.setMaximum(max(1, total_files))
-        self.progress_label.setText(f"Progress: 0 / {total_files}")
+        self.progress_label.setText(f"Napredek: 0 / {total_files}")
         self.stats = {"processed": 0, "matched": 0, "unsorted": 0, "errors": 0}
-        self.summary_label.setText("Running...")
+        self.summary_label.setText("V teku...")
 
     def stop_sorting(self):
         if self.is_running:
             self.cancel_requested = True
-            self.log_message("Stop requested. Finishing current file...")
+            self.log_message("Ustavitev zahtevana. Dokoncujem trenutno datoteko...")
 
     def begin_run(self):
         self.is_running = True
         self.cancel_requested = False
         self.update_button_states()
 
-    def finish_run(self, total_files, matched_label="Matched"):
+    def finish_run(self, total_files, matched_label="Ujemanja"):
         self.is_running = False
         self.update_button_states()
 
         summary = (
-            f"Processed {self.stats['processed']}/{total_files} | "
+            f"Obdelano {self.stats['processed']}/{total_files} | "
             f"{matched_label}: {self.stats['matched']} | "
-            f"Unsorted: {self.stats['unsorted']} | "
-            f"Errors: {self.stats['errors']}"
+            f"Neuvrsceni: {self.stats['unsorted']} | "
+            f"Napake: {self.stats['errors']}"
         )
         self.summary_label.setText(summary)
         self.log_message(summary)
 
     def sort_pdfs(self):
         if not self.source_folder or not self.destination_folder:
-            self.log_message("Please select source and destination folders first.")
+            self.log_message("Najprej izberite izvorno in ciljno mapo.")
             return
 
         pdf_files = sorted(
@@ -317,8 +317,8 @@ class PDFSorterApp(QWidget):
         self.reset_run_ui(total_files)
 
         if total_files == 0:
-            self.summary_label.setText("No PDF files found in source folder.")
-            self.log_message("No PDF files found in source folder.")
+            self.summary_label.setText("V izvorni mapi ni PDF datotek.")
+            self.log_message("V izvorni mapi ni PDF datotek.")
             self.update_button_states()
             return
 
@@ -327,12 +327,12 @@ class PDFSorterApp(QWidget):
         os.makedirs(unsorted_folder, exist_ok=True)
 
         self.begin_run()
-        self.log_message(f"Started PDF size sorting for {total_files} file(s).")
+        self.log_message(f"Zaceto sortiranje PDF velikosti za {total_files} datotek.")
 
         for file in pdf_files:
             QApplication.processEvents()
             if self.cancel_requested:
-                self.log_message("Size sorting stopped by user.")
+                self.log_message("Sortiranje velikosti je ustavljeno.")
                 break
 
             file_path = os.path.join(self.source_folder, file)
@@ -347,54 +347,54 @@ class PDFSorterApp(QWidget):
                 if detected_size:
                     output_path = self.get_unique_output_path(combined_folder, file)
                     self.overlay_and_save_pdf(file_path, output_path, detected_size)
-                    status = "Matched (size)"
+                    status = "Ujemanje (velikost)"
                     self.stats["matched"] += 1
-                    self.log_message(f"Processed: {file} ({detected_size})")
+                    self.log_message(f"Obdelano: {file} ({detected_size})")
                 else:
                     output_path = self.copy_to_unsorted(file_path, file, unsorted_folder)
-                    status = "Unsorted (size not found)"
+                    status = "Neuvrsceno (velikost ni najdena)"
                     self.stats["unsorted"] += 1
-                    self.log_message(f"Size not found: {file}. Copied to unsorted.")
+                    self.log_message(f"Velikost ni najdena: {file}. Kopirano v neuvrscene.")
 
             except Exception as e:
                 output_path = self.copy_to_unsorted(file_path, file, unsorted_folder)
-                status = "Error -> unsorted"
+                status = "Napaka -> neuvrsceno"
                 self.stats["errors"] += 1
-                self.log_message(f"Read error in {file}: {e}. Copied to unsorted.")
+                self.log_message(f"Napaka pri branju datoteke {file}: {e}. Kopirano v neuvrscene.")
 
             self.stats["processed"] += 1
             self.add_result_row(file, detected_size, status, output_path)
             self.update_progress(self.stats["processed"], total_files)
 
-        self.finish_run(total_files, matched_label="Matched")
+        self.finish_run(total_files, matched_label="Ujemanja")
 
     def group_files_by_excel(self):
         if not self.excel_file_path:
-            self.log_message("Please select an Excel file first.")
+            self.log_message("Najprej izberite Excel datoteko.")
             return
 
         pdf_source_folder = QFileDialog.getExistingDirectory(
             self,
-            "Select PDF source folder (Cancel to skip PDF files)",
+            "Izberi mapo PDF datotek (Preklic za preskok PDF datotek)",
             self.group_pdf_source_folder or self.source_folder,
         )
         stp_source_folder = QFileDialog.getExistingDirectory(
             self,
-            "Select STP source folder (Cancel to skip STP files)",
+            "Izberi mapo STP datotek (Preklic za preskok STP datotek)",
             self.group_stp_source_folder or self.source_folder,
         )
         group_destination_folder = QFileDialog.getExistingDirectory(
             self,
-            "Select destination folder for Excel grouping",
+            "Izberi ciljno mapo za razvrscanje po Excelu",
             self.group_destination_folder or self.destination_folder,
         )
 
         if not group_destination_folder:
-            self.log_message("Excel grouping canceled: destination folder was not selected.")
+            self.log_message("Razvrscanje po Excelu prekinjeno: ciljna mapa ni izbrana.")
             return
 
         if not pdf_source_folder and not stp_source_folder:
-            self.log_message("Excel grouping canceled: no PDF or STP source folder selected.")
+            self.log_message("Razvrscanje po Excelu prekinjeno: ni izbrane mape PDF ali STP.")
             return
 
         self.group_pdf_source_folder = pdf_source_folder
@@ -402,14 +402,14 @@ class PDFSorterApp(QWidget):
         self.group_destination_folder = group_destination_folder
 
         self.log_message(
-            f"Grouping sources -> PDF: '{pdf_source_folder or '-'}', "
+            f"Izbrane mape -> PDF: '{pdf_source_folder or '-'}', "
             f"STP: '{stp_source_folder or '-'}', "
-            f"Destination: '{group_destination_folder}'"
+            f"Cilj: '{group_destination_folder}'"
         )
 
         if not self.destination_folder:
             self.destination_folder = group_destination_folder
-            self.dest_label.setText(f"Destination folder: {group_destination_folder}")
+            self.dest_label.setText(f"Ciljna mapa: {group_destination_folder}")
             self.update_button_states()
 
         files_to_process = []
@@ -426,23 +426,23 @@ class PDFSorterApp(QWidget):
         self.reset_run_ui(total_files)
 
         if total_files == 0:
-            self.summary_label.setText("No .pdf or .stp files found in selected folders.")
-            self.log_message("No .pdf or .stp files found in selected folders.")
+            self.summary_label.setText("V izbranih mapah ni .pdf ali .stp datotek.")
+            self.log_message("V izbranih mapah ni .pdf ali .stp datotek.")
             self.update_button_states()
             return
 
         try:
             drawing_records, rows_loaded = self.load_excel_mapping(self.excel_file_path)
         except Exception as e:
-            self.summary_label.setText("Excel read failed.")
-            self.log_message(f"Failed to read Excel file: {e}")
+            self.summary_label.setText("Branje Excel datoteke ni uspelo.")
+            self.log_message(f"Napaka pri branju Excel datoteke: {e}")
             self.update_button_states()
             return
 
         if not drawing_records:
-            self.summary_label.setText("No valid rows found in Excel.")
+            self.summary_label.setText("V Excelu ni veljavnih vrstic.")
             self.log_message(
-                "No valid rows with both 'Drawing no.' and 'KOOPERANT/kooperacija' were found."
+                "Ni veljavnih vrstic z vrednostma v stolpcih 'Drawing no.' in 'KOOPERANT/kooperacija'."
             )
             self.update_button_states()
             return
@@ -454,14 +454,14 @@ class PDFSorterApp(QWidget):
 
         self.begin_run()
         self.log_message(
-            f"Started Excel grouping for {total_files} file(s). "
-            f"Loaded {rows_loaded} mapping rows."
+            f"Zaceto razvrscanje po Excelu za {total_files} datotek. "
+            f"Nalozenih vrstic za ujemanje: {rows_loaded}."
         )
 
         for file_path, file in files_to_process:
             QApplication.processEvents()
             if self.cancel_requested:
-                self.log_message("Excel grouping stopped by user.")
+                self.log_message("Razvrscanje po Excelu je ustavljeno.")
                 break
 
             base_name = os.path.splitext(file)[0]
@@ -488,29 +488,29 @@ class PDFSorterApp(QWidget):
                         copied_paths.append(matched_output_path)
 
                     match_value = ", ".join(sorted(matched_drawings))
-                    status = f"Grouped (Excel -> {len(matched_kooperants)} KOOPERANT)"
+                    status = f"Razvrsceno (Excel -> {len(matched_kooperants)} KOOPERANT)"
                     output_path = " | ".join(copied_paths)
                     self.stats["matched"] += 1
                     self.log_message(
-                        f"Grouped: {file} | Drawing no. match: {match_value} | "
+                        f"Razvrsceno: {file} | Ujemanje Drawing no.: {match_value} | "
                         f"KOOPERANT: {', '.join(sorted(matched_kooperants))}"
                     )
                 except Exception as e:
                     output_path = self.copy_to_unsorted(file_path, file, unsorted_folder)
-                    status = "Error copying -> unsorted"
+                    status = "Napaka pri kopiranju -> neuvrsceno"
                     self.stats["errors"] += 1
-                    self.log_message(f"Copy error in {file}: {e}. Copied to unsorted.")
+                    self.log_message(f"Napaka pri kopiranju datoteke {file}: {e}. Kopirano v neuvrscene.")
             else:
                 output_path = self.copy_to_unsorted(file_path, file, unsorted_folder)
-                status = "Unsorted (no Drawing no. match in filename)"
+                status = "Neuvrsceno (brez ujemanja Drawing no. v imenu datoteke)"
                 self.stats["unsorted"] += 1
-                self.log_message(f"No Drawing no. match: {file}. Copied to unsorted.")
+                self.log_message(f"Brez ujemanja Drawing no.: {file}. Kopirano v neuvrscene.")
 
             self.stats["processed"] += 1
             self.add_result_row(file, match_value, status, output_path)
             self.update_progress(self.stats["processed"], total_files)
 
-        self.finish_run(total_files, matched_label="Grouped")
+        self.finish_run(total_files, matched_label="Razvrsceno")
 
     def collect_files_with_extension(self, folder_path, extension):
         files = []
@@ -520,7 +520,7 @@ class PDFSorterApp(QWidget):
                     if file.lower().endswith(extension):
                         files.append((os.path.join(root, file), file))
         except Exception as e:
-            self.log_message(f"Unable to read folder '{folder_path}': {e}")
+            self.log_message(f"Mape ni mogoce prebrati '{folder_path}': {e}")
         return files
 
     def load_excel_mapping(self, excel_path):
@@ -528,7 +528,7 @@ class PDFSorterApp(QWidget):
             from openpyxl import load_workbook
         except ImportError as e:
             raise RuntimeError(
-                "openpyxl is required. Install it with: pip install openpyxl"
+                "Paket openpyxl je obvezen. Namestite ga z ukazom: pip install openpyxl"
             ) from e
 
         workbook = load_workbook(excel_path, data_only=True, read_only=True)
@@ -539,8 +539,8 @@ class PDFSorterApp(QWidget):
             drawing_col_idx, kooperant_col_idx, header_row = self.find_header_columns(sheet)
             if drawing_col_idx is None or kooperant_col_idx is None:
                 self.log_message(
-                    "Skipped sheet "
-                    f"'{sheet.title}' (columns 'Drawing no.' and 'KOOPERANT/kooperacija' not found)."
+                    "List je preskocen "
+                    f"'{sheet.title}' (stolpca 'Drawing no.' in 'KOOPERANT/kooperacija' nista bila najdena)."
                 )
                 continue
 
@@ -686,7 +686,7 @@ class PDFSorterApp(QWidget):
     def update_progress(self, current, total):
         self.progress_bar.setMaximum(max(1, total))
         self.progress_bar.setValue(current)
-        self.progress_label.setText(f"Progress: {current} / {total}")
+        self.progress_label.setText(f"Napredek: {current} / {total}")
         QApplication.processEvents()
 
     def add_result_row(self, file_name, detected_value, status, output_path):
@@ -699,7 +699,7 @@ class PDFSorterApp(QWidget):
 
     def open_folder(self, folder_path):
         if not folder_path or not os.path.isdir(folder_path):
-            self.log_message("Folder does not exist yet.")
+            self.log_message("Mapa ne obstaja.")
             return
 
         QDesktopServices.openUrl(QUrl.fromLocalFile(folder_path))
@@ -713,14 +713,14 @@ class PDFSorterApp(QWidget):
         self.open_folder(unsorted_folder)
 
     def open_pdf_viewer(self):
-        file, _ = QFileDialog.getOpenFileName(self, "Select PDF", "", "PDF Files (*.pdf)")
+        file, _ = QFileDialog.getOpenFileName(self, "Izberi PDF", "", "PDF datoteke (*.pdf)")
         if file:
             self.viewer = PDFViewer(file)
 
             self.scroll = QScrollArea()
             self.scroll.setWidget(self.viewer)
             self.scroll.setWidgetResizable(True)
-            self.scroll.setWindowTitle("Select area (click + drag)")
+            self.scroll.setWindowTitle("Izberi obmocje (klik + povleci)")
             self.scroll.showMaximized()
 
     def keyPressEvent(self, event):
@@ -761,3 +761,4 @@ if __name__ == "__main__":
     window = PDFSorterApp()
     window.show()
     sys.exit(app.exec())
+
