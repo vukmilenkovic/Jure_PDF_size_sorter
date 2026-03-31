@@ -297,6 +297,7 @@ class PDFSorterApp(QWidget):
         summary = (
             f"Obdelano {self.stats['processed']}/{total_files} | "
             f"{matched_label}: {self.stats['matched']} | "
+            f"Preskoceni: {self.stats['skipped']} | "
             f"Neuvrsceni: {self.stats['unsorted']} | "
             f"Napake: {self.stats['errors']}"
         )
@@ -446,9 +447,6 @@ class PDFSorterApp(QWidget):
 
         match_index = self.build_drawing_match_index(drawing_records)
 
-        unsorted_folder = os.path.join(group_destination_folder, self.unsorted_output_folder)
-        os.makedirs(unsorted_folder, exist_ok=True)
-
         self.begin_run()
         self.log_message(
             f"Zaceto razvrscanje po Excelu za {total_files} datotek. "
@@ -481,7 +479,7 @@ class PDFSorterApp(QWidget):
                         os.makedirs(target_folder, exist_ok=True)
 
                         matched_output_path = self.get_unique_output_path(target_folder, file)
-                        shutil.copy2(file_path, matched_output_path)
+                        self.save_grouped_file(file_path, matched_output_path)
                         copied_paths.append(matched_output_path)
 
                     match_value = ", ".join(sorted(matched_drawings))
@@ -493,15 +491,18 @@ class PDFSorterApp(QWidget):
                         f"KOOPERANT: {', '.join(sorted(matched_kooperants))}"
                     )
                 except Exception as e:
+                    unsorted_folder = os.path.join(group_destination_folder, self.unsorted_output_folder)
+                    os.makedirs(unsorted_folder, exist_ok=True)
                     output_path = self.copy_to_unsorted(file_path, file, unsorted_folder)
                     status = "Napaka pri kopiranju -> neuvrsceno"
                     self.stats["errors"] += 1
+                    self.stats["unsorted"] += 1
                     self.log_message(f"Napaka pri kopiranju datoteke {file}: {e}. Kopirano v neuvrscene.")
             else:
-                output_path = self.copy_to_unsorted(file_path, file, unsorted_folder)
-                status = "Neuvrsceno (brez ujemanja Drawing no. v imenu datoteke)"
-                self.stats["unsorted"] += 1
-                self.log_message(f"Brez ujemanja Drawing no.: {file}. Kopirano v neuvrscene.")
+                output_path = "-"
+                status = "Preskoceno (brez KOOPERANT ujemanja)"
+                self.stats["skipped"] += 1
+                self.log_message(f"Brez KOOPERANT ujemanja: {file}. Datoteka je preskocena.")
 
             self.stats["processed"] += 1
             self.add_result_row(file, match_value, status, output_path)
@@ -522,7 +523,7 @@ class PDFSorterApp(QWidget):
         return files
 
     def new_stats(self):
-        return {"processed": 0, "matched": 0, "unsorted": 0, "errors": 0}
+        return {"processed": 0, "matched": 0, "skipped": 0, "unsorted": 0, "errors": 0}
 
     def set_destination_folder(self, folder_path):
         if not folder_path:
@@ -691,6 +692,22 @@ class PDFSorterApp(QWidget):
 
         return None
 
+    def detect_sheet_size_from_file(self, file_path):
+        try:
+            with pdfplumber.open(file_path) as pdf:
+                return self.detect_sheet_size(pdf)
+        except Exception:
+            return None
+
+    def save_grouped_file(self, source_path, output_path):
+        if source_path.lower().endswith(".pdf"):
+            sheet_size = self.detect_sheet_size_from_file(source_path)
+            if sheet_size:
+                self.overlay_and_save_pdf(source_path, output_path, sheet_size)
+                return
+
+        shutil.copy2(source_path, output_path)
+
     def update_progress(self, current, total):
         self.progress_bar.setMaximum(max(1, total))
         self.progress_bar.setValue(current)
@@ -769,4 +786,3 @@ if __name__ == "__main__":
     window = PDFSorterApp()
     window.show()
     sys.exit(app.exec())
-
