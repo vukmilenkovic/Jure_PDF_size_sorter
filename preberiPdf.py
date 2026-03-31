@@ -115,7 +115,7 @@ class PDFSorterApp(QWidget):
     def build_ui(self):
         layout = QVBoxLayout()
 
-        self.source_btn = QPushButton("Izberi izvorno mapo")
+        self.source_btn = QPushButton("Izberi izvorno mapo za brisanje glav PDF dokumentov")
         self.source_btn.clicked.connect(self.select_source)
         self.source_label = QLabel("Izvorna mapa: ni izbrana")
         self.source_label.setWordWrap(True)
@@ -125,7 +125,7 @@ class PDFSorterApp(QWidget):
         source_row.addWidget(self.source_label, 1)
         layout.addLayout(source_row)
 
-        self.dest_btn = QPushButton("Izberi ciljno mapo")
+        self.dest_btn = QPushButton("Izberi ciljno mapo za brisanje glav PDF dokumentov")
         self.dest_btn.clicked.connect(self.select_destination)
         self.dest_label = QLabel("Ciljna mapa: ni izbrana")
         self.dest_label.setWordWrap(True)
@@ -135,7 +135,7 @@ class PDFSorterApp(QWidget):
         dest_row.addWidget(self.dest_label, 1)
         layout.addLayout(dest_row)
 
-        self.excel_btn = QPushButton("Izberi Excel (.xlsx) datoteko")
+        self.excel_btn = QPushButton("Izberi Excel (.xlsx) datoteko za grupacijo prek kooperanta")
         self.excel_btn.clicked.connect(self.select_excel_file)
         self.excel_label = QLabel("Excel datoteka: ni izbrana")
         self.excel_label.setWordWrap(True)
@@ -148,7 +148,7 @@ class PDFSorterApp(QWidget):
         self.start_btn = QPushButton("Zacni sortiranje (PDF)")
         self.start_btn.clicked.connect(self.sort_pdfs)
 
-        self.group_by_excel_btn = QPushButton("Razvrsti po Excelu (PDF + STP)")
+        self.group_by_excel_btn = QPushButton("Zdruzi dokumente (PDF + STP)")
         self.group_by_excel_btn.clicked.connect(self.group_files_by_excel)
 
         self.stop_btn = QPushButton("Ustavi")
