@@ -686,9 +686,9 @@ class PDFSorterApp(QWidget):
             if not text:
                 continue
 
-            match = re.search(r"\bA\s*[-]?\s*([0-4])\b", text, re.IGNORECASE)
+            match = re.search(r"\bA[0-4]\b", text)
             if match:
-                return f"A{match.group(1)}"
+                return match.group(0)
 
         return None
 
