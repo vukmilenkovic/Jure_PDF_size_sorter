@@ -6,7 +6,7 @@ import sys
 import fitz
 import pdfplumber
 from PyQt6.QtCore import QPoint, Qt, QUrl
-from PyQt6.QtGui import QDesktopServices, QImage, QPainter, QPen, QPixmap
+from PyQt6.QtGui import QDesktopServices, QFont, QImage, QPainter, QPen, QPixmap
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -110,6 +110,7 @@ class PDFSorterApp(QWidget):
         }
 
         self.build_ui()
+        self.apply_font_tuning()
         self.update_button_states()
 
     def build_ui(self):
@@ -178,7 +179,7 @@ class PDFSorterApp(QWidget):
         self.progress_bar.setMaximum(1)
         self.progress_bar.setValue(0)
         self.progress_bar.setTextVisible(True)
-        self.progress_bar.setFormat("%v / %m")
+        self.progress_bar.setFormat("")
         self.progress_bar.setStyleSheet(
             """
             QProgressBar {
@@ -222,16 +223,49 @@ class PDFSorterApp(QWidget):
         self.log = QTextEdit()
         self.log.setReadOnly(True)
         self.log.setFixedHeight(155)
-        self.log.setStyleSheet(
-            """
-            QTextEdit {
-                font-size: 12px;
-            }
-            """
-        )
         layout.addWidget(self.log)
 
         self.setLayout(layout)
+
+    def apply_font_tuning(self):
+        button_font = QFont("Segoe UI", 10)
+        button_font.setBold(True)
+
+        label_font = QFont("Segoe UI", 10)
+        summary_font = QFont("Segoe UI", 11)
+        summary_font.setBold(True)
+        table_font = QFont("Segoe UI", 10)
+        header_font = QFont("Segoe UI", 10)
+        header_font.setBold(True)
+        log_font = QFont("Segoe UI", 10)
+
+        buttons = [
+            self.source_btn,
+            self.dest_btn,
+            self.excel_btn,
+            self.start_btn,
+            self.group_by_excel_btn,
+            self.stop_btn,
+            self.open_sorted_btn,
+            self.open_unsorted_btn,
+            self.inspect_btn,
+        ]
+        for button in buttons:
+            button.setFont(button_font)
+
+        labels = [
+            self.source_label,
+            self.dest_label,
+            self.excel_label,
+            self.progress_label,
+        ]
+        for label in labels:
+            label.setFont(label_font)
+
+        self.summary_label.setFont(summary_font)
+        self.results_table.setFont(table_font)
+        self.results_table.horizontalHeader().setFont(header_font)
+        self.log.setFont(log_font)
 
     def update_button_states(self):
         has_source_and_dest = bool(self.source_folder and self.destination_folder)
@@ -808,6 +842,7 @@ class PDFSorterApp(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setFont(QFont("Segoe UI", 10))
     window = PDFSorterApp()
     window.show()
     sys.exit(app.exec())
