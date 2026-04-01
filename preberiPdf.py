@@ -177,6 +177,25 @@ class PDFSorterApp(QWidget):
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(1)
         self.progress_bar.setValue(0)
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setFormat("%v / %m")
+        self.progress_bar.setStyleSheet(
+            """
+            QProgressBar {
+                border: 1px solid #6f6f6f;
+                border-radius: 4px;
+                background-color: #f0f0f0;
+                color: #1f1f1f;
+                font-weight: 600;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: #2f9e44;
+                border-radius: 3px;
+                margin: 1px;
+            }
+            """
+        )
 
         progress_row = QHBoxLayout()
         progress_row.addWidget(self.progress_label, 0)
