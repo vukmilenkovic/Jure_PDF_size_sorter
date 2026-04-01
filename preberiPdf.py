@@ -702,9 +702,11 @@ class PDFSorterApp(QWidget):
     def save_grouped_file(self, source_path, output_path):
         if source_path.lower().endswith(".pdf"):
             sheet_size = self.detect_sheet_size_from_file(source_path)
-            if sheet_size:
-                self.overlay_and_save_pdf(source_path, output_path, sheet_size)
-                return
+            if not sheet_size:
+                raise ValueError("Velikost lista ni zaznana, prekrivnega pravokotnika ni mogoce narisati.")
+
+            self.overlay_and_save_pdf(source_path, output_path, sheet_size)
+            return
 
         shutil.copy2(source_path, output_path)
 
@@ -766,7 +768,11 @@ class PDFSorterApp(QWidget):
 
     def copy_to_unsorted(self, file_path, filename, unsorted_folder):
         unsorted_output_path = self.get_unique_output_path(unsorted_folder, filename)
-        shutil.copy2(file_path, unsorted_output_path)
+        if file_path.lower().endswith(".pdf"):
+            sheet_size = self.detect_sheet_size_from_file(file_path)
+            self.overlay_and_save_pdf(file_path, unsorted_output_path, sheet_size)
+        else:
+            shutil.copy2(file_path, unsorted_output_path)
         return unsorted_output_path
 
     def get_unique_output_path(self, target_folder, filename):
